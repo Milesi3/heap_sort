@@ -1,53 +1,102 @@
-import java.util.Arrays;
-
-public class Main {
-    public static void sort(int[] arr) {
-        int n = arr.length;
-
-        // Построить кучу (переставить массив)
-        for (int i = n / 2 - 1; i >= 0; i--)
-            heapify(arr, n, i);
-
-        // Один за другим извлечь элемент из кучи
-        for (int i = n - 1; i >= 0; i--) {
-            // Переместить текущий корень в конец
-            int temp = arr[0];
-            arr[0] = arr[i];
-            arr[i] = temp;
-
-            // вызвать max heapify для уменьшенной кучи
-            heapify(arr, i, 0);
-        }
-    }
-
-    // Чтобы создать поддерево с корнем узла i, который является индексом в arr[]. n - размер кучи
-    static void heapify(int[] arr, int n, int i) {
-        int largest = i; // Инициализировать наибольший как корень
-        int left = 2 * i + 1; // left = 2*i + 1
-        int right = 2 * i + 2; // right = 2*i + 2
-
-        // Если левый дочерний элемент больше, чем корень
-        if (left < n && arr[left] > arr[largest])
-            largest = left;
-
-        //Если правый элемент больше, чем самый большой на данный момент
-        if (right < n && arr[right] > arr[largest])
-            largest = right;
-
-        // Если самый большой не корень
-        if (largest != i) {
-            int swap = arr[i];
-            arr[i] = arr[largest];
-            arr[largest] = swap;
-
-            // Рекурсивно увеличить затронутое поддерево
-            heapify(arr, n, largest);
-        }
-    }
-
+public class Main<T extends Comparable<T>> {
+    private Node<T> root;
     public static void main(String[] args) {
-        int[] arr = { 12, 11, 13, 5, 6, 7 };
-        Main.sort(arr);
-        System.out.println(Arrays.toString(arr));
+        Main<Integer> tree = new Main<>();
+        tree.add(10);
+        tree.add(20);
+        tree.add(30);
+        tree.add(40);
+        tree.add(50);
+        tree.printInOrder(); // выводит "10 20 30 40 50"
+    }
+
+    private static class Node<T> {
+        T value;
+        Node<T> left;
+        Node<T> right;
+        boolean isRed;
+
+        Node(T value, boolean isRed) {
+            this.value = value;
+            this.isRed = isRed;
+        }
+    }
+
+    public void add(T value) {
+        root = add(root, value);
+        root.isRed = false;
+    }
+
+    private Node<T> add(Node<T> node, T value) {
+        if (node == null) {
+            return new Node<T>(value, true);
+        }
+
+        if (value.compareTo(node.value) < 0) {
+            node.left = add(node.left, value);
+        } else if (value.compareTo(node.value) > 0) {
+            node.right = add(node.right, value);
+        } else {
+            // значение уже существует в дереве
+            return node;
+        }
+
+        // исправит любые нарушения свойств красно-черного дерева
+        if (isRed(node.right) && !isRed(node.left)) {
+            node = rotateLeft(node);
+        }
+        if (isRed(node.left) && isRed(node.left.left)) {
+            node = rotateRight(node);
+        }
+        if (isRed(node.left) && isRed(node.right)) {
+            flipColors(node);
+        }
+
+        return node;
+    }
+
+    private boolean isRed(Node<T> node) {
+        if (node == null) {
+            return false;
+        }
+        return node.isRed;
+    }
+
+    private Node<T> rotateLeft(Node<T> node) {
+        Node<T> right = node.right;
+        node.right = right.left;
+        right.left = node;
+        right.isRed = node.isRed;
+        node.isRed = true;
+        return right;
+    }
+
+    private Node<T> rotateRight(Node<T> node) {
+        Node<T> left = node.left;
+        node.left = left.right;
+        left.right = node;
+        left.isRed = node.isRed;
+        node.isRed = true;
+        return left;
+    }
+
+    private void flipColors(Node<T> node) {
+        node.isRed = true;
+        node.left.isRed = false;
+        node.right.isRed = false;
+    }
+
+    public void printInOrder() {
+        printInOrder(root);
+    }
+
+    private void printInOrder(Node<T> node) {
+        if (node != null) {
+            printInOrder(node.left);
+            System.out.print(node.value + " ");
+            printInOrder(node.right);
+        }
     }
 }
+
+
